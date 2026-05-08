@@ -15,12 +15,12 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
+    const supabase = createClient()
 
     const { data, error } = await supabase.auth.signUp({
       email,
