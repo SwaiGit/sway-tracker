@@ -1,0 +1,84 @@
+'use client'
+
+import { useRef } from 'react'
+
+export default function WeekBar({ week, weekDays, onPrev, onNext, onJump, onSelectDay, getDayStats, dragState, onDropToDay }) {
+  const dateInputRef = useRef(null)
+
+  const firstDay = weekDays[0]
+  const lastDay = weekDays[6]
+
+  const fmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+  const rangeLabel = `${fmt.format(new Date(firstDay.key + 'T00:00:00'))} – ${fmt.format(new Date(lastDay.key + 'T00:00:00'))}`
+
+  return (
+    <section className="week-bar" aria-label="Week navigation">
+      <button className="week-nav" onClick={onPrev} aria-label="Previous week" type="button">‹</button>
+
+      <div className="week-center">
+        <div className="week-bar-top">
+          <span className="week-range">{rangeLabel}</span>
+          <div style={{ position: 'relative' }}>
+            <button
+              className="cal-btn"
+              type="button"
+              aria-label="Jump to date"
+              onClick={() => {
+                if (dateInputRef.current?.showPicker) dateInputRef.current.showPicker()
+                else dateInputRef.current?.focus()
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="5" width="16" height="15" rx="2"/>
+                <path d="M8 3v4M16 3v4M4 10h16"/>
+              </svg>
+            </button>
+            <input
+              ref={dateInputRef}
+              type="date"
+              style={{ position: 'absolute', inset: 0, opacity: 0, pointerEvents: 'none' }}
+              value={week.selectedDayKey}
+              onChange={e => onJump(e.target.value)}
+              aria-label="Choose a date"
+            />
+          </div>
+        </div>
+
+        <div className="week-strip">
+          {weekDays.map(day => {
+            const dayData = week.days[day.key]
+            const stats = dayData ? getDayStats(dayData) : { total: 0, completed: 0, percent: 0 }
+            const isActive = day.key === week.selectedDayKey
+            const isToday = day.isToday
+
+            return (
+              <button
+                key={day.key}
+                type="button"
+                className={`day-pill${isActive ? ' active' : ''}${isToday ? ' today' : ''}`}
+                onClick={() => onSelectDay(day.key)}
+                onDragOver={e => { if (dragState) { e.preventDefault() } }}
+                onDrop={e => { e.preventDefault(); onDropToDay(day.key) }}
+                aria-label={`${day.dayLabel} ${day.dateLabel}${isToday ? ', today' : ''}${isActive ? ', selected' : ''}`}
+              >
+                <div className="day-top">
+                  <span className="day-name">{day.shortLabel}</span>
+                  <span className="day-date">{day.dateLabel}</span>
+                </div>
+                <div className="mini-bar">
+                  <div className="mini-bar-fill" style={{ width: `${stats.percent}%` }} />
+                </div>
+                <div className="day-meta">
+                  <span>{stats.completed}/{stats.total}</span>
+                  <span>{stats.percent}%</span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <button className="week-nav" onClick={onNext} aria-label="Next week" type="button">›</button>
+    </section>
+  )
+}
