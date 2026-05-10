@@ -137,7 +137,6 @@ export default function Sidebar({
         <div className="sidebar-section">
           <div className="section-head">
             <strong className="section-title">General To Do</strong>
-            <span className="section-hint">Drag tasks to a day, or add below</span>
           </div>
 
           <ul

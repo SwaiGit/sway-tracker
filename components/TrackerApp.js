@@ -513,13 +513,13 @@ export default function TrackerApp({ user }) {
               {/* Stats ring */}
               <div className="header-stats">
                 <div className="stat-ring-wrap">
-                  <svg className="stat-ring" viewBox="0 0 80 80" aria-hidden="true">
-                    <circle className="ring-track" cx="40" cy="40" r="33" />
+                  <svg className="stat-ring" viewBox="0 0 96 96" aria-hidden="true">
+                    <circle className="ring-track" cx="48" cy="48" r="42" />
                     <circle
                       className="ring-fill"
-                      cx="40" cy="40" r="33"
+                      cx="48" cy="48" r="42"
                       style={{
-                        strokeDashoffset: 207.3 - (dayStats.percent / 100) * 207.3,
+                        strokeDashoffset: 263.9 - (dayStats.percent / 100) * 263.9,
                         stroke: dayStats.percent === 100 && dayStats.total > 0 ? 'var(--success)' : 'var(--gold)',
                       }}
                     />
