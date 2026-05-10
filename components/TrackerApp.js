@@ -85,20 +85,24 @@ function createDashboardState(dashboardName, anchor = new Date()) {
   }
 }
 
+function migrateState(saved) {
+  if (!saved?.dashboards) return null
+  for (const name of Object.keys(saved.dashboards)) {
+    const db = saved.dashboards[name]
+    if (db && db.buyTasks !== undefined && !db.sections) {
+      db.sections = [{ id: createId(), title: name === 'SWAY' ? 'Leads & New Business' : 'Things To Buy', tasks: db.buyTasks || [] }]
+      delete db.buyTasks
+    }
+  }
+  return saved
+}
+
 function initState() {
   const STORAGE_KEY = 'sway-tracker-state-v1'
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-    if (saved?.dashboards) {
-      for (const name of Object.keys(saved.dashboards)) {
-        const db = saved.dashboards[name]
-        if (db && db.buyTasks !== undefined && !db.sections) {
-          db.sections = [{ id: createId(), title: name === 'SWAY' ? 'Leads & New Business' : 'Things To Buy', tasks: db.buyTasks || [] }]
-          delete db.buyTasks
-        }
-      }
-      return saved
-    }
+    const migrated = migrateState(saved)
+    if (migrated) return migrated
   } catch {}
   return {
     activeDashboard: DASHBOARD_NAMES[0],
@@ -120,21 +124,44 @@ export default function TrackerApp({ user }) {
   const [editingSectionTask, setEditingSectionTask] = useState(null)
   const router = useRouter()
   const supabase = createClient()
+  const saveTimer = useRef(null)
 
-  // Load from localStorage on mount
+  // Load: show localStorage immediately, then sync from Supabase
   useEffect(() => {
-    setStateRaw(initState())
-  }, [])
+    const local = initState()
+    setStateRaw(local)
 
-  // Persist to localStorage whenever state changes
-  const stateRef = useRef(state)
-  useEffect(() => {
-    stateRef.current = state
-    if (state) {
-      try {
-        localStorage.setItem('sway-tracker-state-v1', JSON.stringify(state))
-      } catch {}
+    async function syncFromCloud() {
+      if (!user?.id) return
+      const { data, error } = await supabase
+        .from('user_data')
+        .select('state')
+        .eq('user_id', user.id)
+        .single()
+
+      if (error && error.code !== 'PGRST116') return
+
+      if (data?.state) {
+        const migrated = migrateState(data.state) || data.state
+        setStateRaw(migrated)
+        try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(migrated)) } catch {}
+      } else {
+        supabase.from('user_data').upsert({ user_id: user.id, state: local, updated_at: new Date().toISOString() })
+      }
     }
+    syncFromCloud()
+  }, [user?.id])
+
+  // Persist: localStorage immediately + debounced Supabase upsert
+  useEffect(() => {
+    if (!state) return
+    try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(state)) } catch {}
+
+    if (!user?.id) return
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      supabase.from('user_data').upsert({ user_id: user.id, state, updated_at: new Date().toISOString() })
+    }, 1500)
   }, [state])
 
   function setState(updater) {
