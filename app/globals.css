@@ -355,6 +355,11 @@ button, input, textarea, select {
   box-shadow: 0 8px 20px rgba(45,183,195,0.22);
 }
 
+/* Mobile info strip (time + weather) — hidden on desktop */
+.mobile-info {
+  display: none;
+}
+
 /* Header widgets */
 .header-right {
   display: flex;
@@ -650,6 +655,33 @@ button, input, textarea, select {
   text-transform: uppercase;
 }
 
+.week-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.today-btn {
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.88);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 6px 10px;
+  min-height: 36px;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.today-btn:hover {
+  background: rgba(255,255,255,0.26);
+  color: white;
+}
+
 .cal-btn {
   border: 0;
   background: transparent;
@@ -663,6 +695,7 @@ button, input, textarea, select {
   min-height: 44px;
   min-width: 44px;
   justify-content: center;
+  overflow: visible;
 }
 
 .cal-btn:hover { color: white; }
@@ -1146,16 +1179,22 @@ button, input, textarea, select {
 }
 
 .reset-btn {
-  border: 1px solid var(--line);
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.72);
-  color: var(--text);
-  font-weight: 800;
-  font-size: 0.8rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
+  font-family: inherit;
+  padding: 4px 0;
+  opacity: 0.7;
+  transition: opacity 0.15s, color 0.15s;
   white-space: nowrap;
+}
+
+.reset-btn:hover {
+  opacity: 1;
+  color: var(--text);
 }
 
 .reset-btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.9); }
@@ -1390,6 +1429,28 @@ button, input, textarea, select {
   .main-add-btn { min-height: 52px; }
 
   .week-range { font-size: 0.68rem; }
+
+  /* Time + weather strip */
+  .mobile-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+
+  .mobile-info-time {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .mobile-info-weather {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
 
   /* Avatar: not sticky on mobile, sits top-right */
   .avatar-anchor {

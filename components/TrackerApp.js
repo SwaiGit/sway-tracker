@@ -7,6 +7,7 @@ import WeekBar from './WeekBar'
 import Sidebar from './Sidebar'
 import Editor from './Editor'
 import HeaderWidget from './HeaderWidget'
+import MobileInfo from './MobileInfo'
 
 const DASHBOARD_NAMES = ['Personal', 'SWAY']
 
@@ -273,6 +274,18 @@ export default function TrackerApp({ user }) {
       ensureWeek(next, dateFromKey(dateVal), dateVal)
       return next
     })
+  }
+
+  function jumpToToday() {
+    setEditingTaskId(null)
+    const today = new Date()
+    const todayKey = formatKey(today)
+    setState(prev => {
+      const next = structuredClone(prev)
+      ensureWeek(next, today, todayKey)
+      return next
+    })
+    setMobileTab('today')
   }
 
   function addTask(text) {
@@ -634,6 +647,7 @@ export default function TrackerApp({ user }) {
                   </button>
                 ))}
               </div>
+              <MobileInfo />
             </div>
 
             <div className="header-right">
@@ -688,6 +702,7 @@ export default function TrackerApp({ user }) {
           onPrev={() => goWeekOffset(-1)}
           onNext={() => goWeekOffset(1)}
           onJump={jumpToDate}
+          onToday={jumpToToday}
           onSelectDay={selectDay}
           getDayStats={getDayStats}
           dragState={dragState}
