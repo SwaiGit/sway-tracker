@@ -123,6 +123,18 @@ export default function TrackerApp({ user }) {
   const [editingGeneralId, setEditingGeneralId] = useState(null)
   const [editingSectionTask, setEditingSectionTask] = useState(null)
   const [mobileTab, setMobileTab] = useState('today')
+  const [avatarOpen, setAvatarOpen] = useState(false)
+  const avatarRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (avatarRef.current && !avatarRef.current.contains(e.target)) {
+        setAvatarOpen(false)
+      }
+    }
+    if (avatarOpen) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [avatarOpen])
   const router = useRouter()
   const supabase = createClient()
   const saveTimer = useRef(null)
@@ -576,9 +588,30 @@ export default function TrackerApp({ user }) {
 
   return (
     <div className="app-bg" data-dashboard={state.activeDashboard}>
-      <div className="shell">
-        <button className="sign-out-link" onClick={signOut} type="button">Sign out</button>
 
+      {/* Fixed avatar + dropdown — top left of screen */}
+      <div className="avatar-anchor" ref={avatarRef}>
+        <button
+          className="user-avatar"
+          title={displayName}
+          onClick={() => setAvatarOpen(o => !o)}
+          aria-expanded={avatarOpen}
+          aria-haspopup="menu"
+          type="button"
+        >
+          {initials}
+        </button>
+        {avatarOpen && (
+          <div className="avatar-menu" role="menu">
+            <div className="avatar-menu-name">{displayName}</div>
+            <button className="avatar-menu-item" role="menuitem" onClick={signOut} type="button">
+              Sign out
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="shell">
         {/* Header */}
         <header className="app-header">
           <div className="header-inner">
@@ -587,9 +620,6 @@ export default function TrackerApp({ user }) {
                 <div>
                   <span className="eyebrow">Weekly Workflow</span>
                   <h1 className="header-title">Task Tracker</h1>
-                </div>
-                <div className="header-user">
-                  <div className="user-avatar" title={displayName}>{initials}</div>
                 </div>
               </div>
               <div className="dashboard-switcher">
