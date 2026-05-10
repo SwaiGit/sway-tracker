@@ -1264,43 +1264,77 @@ button, input, textarea, select {
   .header-widget { display: none; }
 }
 
+/* Mobile bottom tab bar — hidden on desktop */
+.mobile-tabs { display: none; }
+
 /* Responsive: mobile */
 @media (max-width: 768px) {
   .app-bg { padding: 0; }
 
-  .app-header { padding: 12px 16px; }
+  /* Add bottom padding so content isn't behind the tab bar */
+  .shell { padding-bottom: 64px; }
+
+  .app-header { padding: 10px 16px 12px; }
 
   .header-inner {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 8px;
   }
 
-  .header-right {
-    display: none;
+  .header-brand {
+    align-items: center;
   }
 
-  .header-logo { height: 22px; }
+  .header-right { display: none; }
 
-  .header-title { font-size: 1.4rem; }
+  .eyebrow { display: none; }
 
-  .dashboard-tab { padding: 8px 12px; font-size: 0.8rem; }
+  .header-title { font-size: 1.3rem; }
 
-  .week-bar { padding: 10px 12px 14px; grid-template-columns: 28px 1fr 28px; }
+  .dashboard-switcher { margin-top: 0; }
+  .dashboard-tab { padding: 7px 14px; font-size: 0.8rem; }
 
-  .week-strip { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .week-bar { padding: 10px 12px 14px; grid-template-columns: 36px 1fr 36px; }
+
+  /* Scrollable week strip on mobile */
+  .week-center { overflow: hidden; }
+  .week-strip {
+    grid-template-columns: repeat(7, minmax(52px, 1fr));
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .week-strip::-webkit-scrollbar { display: none; }
 
   .day-pill {
     padding: 10px 6px;
     border-radius: 14px;
-    min-height: 70px;
-    gap: 6px;
+    min-height: 68px;
+    gap: 5px;
   }
 
-  .day-name { font-size: 0.72rem; }
-  .day-date { font-size: 0.6rem; }
-  .day-meta { font-size: 0.6rem; }
+  .day-name { font-size: 0.7rem; }
+  .day-date { font-size: 0.58rem; }
+  .day-meta { font-size: 0.58rem; }
 
-  .sidebar, .editor { padding: 16px; }
+  /* Single-panel content on mobile */
+  .content {
+    grid-template-columns: 1fr;
+    min-height: unset;
+  }
+
+  .content.mobile-tab-today .sidebar { display: none; }
+  .content.mobile-tab-lists .editor { display: none; }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 0;
+    padding: 16px;
+  }
+
+  .editor { padding: 16px; }
 
   .editor-toolbar { flex-direction: column; gap: 10px; }
   .editor-toolbar > div:first-child { width: 100%; }
@@ -1309,7 +1343,54 @@ button, input, textarea, select {
   .main-add-form { grid-template-columns: 1fr; }
   .main-add-btn { min-height: 52px; }
 
-  .week-range { font-size: 0.7rem; }
+  .week-range { font-size: 0.68rem; }
+
+  /* Mobile bottom tab bar */
+  .mobile-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--panel-strong);
+    border-top: 1px solid var(--line);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 8px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s;
+    min-height: 56px;
+  }
+
+  .mobile-tab.active {
+    color: var(--gold);
+  }
+
+  .mobile-tab svg {
+    transition: transform 0.15s;
+  }
+
+  .mobile-tab.active svg {
+    transform: translateY(-1px);
+  }
 }
 
 @media (max-width: 480px) {

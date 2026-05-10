@@ -122,6 +122,7 @@ export default function TrackerApp({ user }) {
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [editingGeneralId, setEditingGeneralId] = useState(null)
   const [editingSectionTask, setEditingSectionTask] = useState(null)
+  const [mobileTab, setMobileTab] = useState('today')
   const router = useRouter()
   const supabase = createClient()
   const saveTimer = useRef(null)
@@ -238,6 +239,7 @@ export default function TrackerApp({ user }) {
       getActiveWeek(next).selectedDayKey = key
       return next
     })
+    setMobileTab('today')
   }
 
   function goWeekOffset(offset) {
@@ -666,7 +668,7 @@ export default function TrackerApp({ user }) {
         />
 
         {/* Content */}
-        <div className="content">
+        <div className={`content mobile-tab-${mobileTab}`}>
           <Sidebar
             dashboard={dashboard}
             lifetimeStats={lifetimeStats}
@@ -720,6 +722,31 @@ export default function TrackerApp({ user }) {
             }}
           />
         </div>
+
+        {/* Mobile bottom tab bar */}
+        <nav className="mobile-tabs" aria-label="View switcher">
+          <button
+            className={`mobile-tab${mobileTab === 'today' ? ' active' : ''}`}
+            onClick={() => setMobileTab('today')}
+            type="button"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="14" height="14" rx="3" stroke="currentColor" strokeWidth="1.8"/>
+              <path d="M7 10h6M7 13h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+            Today
+          </button>
+          <button
+            className={`mobile-tab${mobileTab === 'lists' ? ' active' : ''}`}
+            onClick={() => setMobileTab('lists')}
+            type="button"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M4 6h12M4 10h12M4 14h7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+            Lists
+          </button>
+        </nav>
       </div>
     </div>
   )
