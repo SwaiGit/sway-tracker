@@ -1,8 +1,8 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
-function TaskItem({ task, isEditing, onToggle, onDelete, onEdit, onSave, onCancel, onDragStart, onDragEnd, listType }) {
+function TaskItem({ task, isEditing, onToggle, onDelete, onEdit, onSave, onCancel, onDragStart, onDragEnd }) {
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -89,18 +89,109 @@ function AddForm({ placeholder, onAdd, textareaRef }) {
   )
 }
 
+function SectionBlock({
+  section, editingSectionTask, dragState, setDragState,
+  onRename, onDelete,
+  onAddTask, onToggleTask, onDeleteTask, onEditTask, onSaveTaskEdit, onCancelTaskEdit,
+  onDropToSection,
+}) {
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleVal, setTitleVal] = useState(section.title)
+  const titleInputRef = useRef(null)
+  const addRef = useRef(null)
+
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) {
+      titleInputRef.current.focus()
+      titleInputRef.current.select()
+    }
+  }, [editingTitle])
+
+  function commitTitle() {
+    const trimmed = titleVal.trim()
+    if (trimmed && trimmed !== section.title) onRename(trimmed)
+    else setTitleVal(section.title)
+    setEditingTitle(false)
+  }
+
+  const isDragTarget = dragState?.sourceKind === 'day' || dragState?.sourceKind === 'general' ||
+    (dragState?.sourceKind === 'section' && dragState?.sectionId !== section.id)
+
+  return (
+    <div className="sidebar-section">
+      <div className="section-head">
+        {editingTitle ? (
+          <input
+            ref={titleInputRef}
+            className="section-title-input"
+            value={titleVal}
+            maxLength={60}
+            onChange={e => setTitleVal(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); commitTitle() }
+              if (e.key === 'Escape') { setTitleVal(section.title); setEditingTitle(false) }
+            }}
+            onBlur={commitTitle}
+          />
+        ) : (
+          <strong className="section-title" onDoubleClick={() => setEditingTitle(true)}>{section.title}</strong>
+        )}
+        <div className="section-head-actions">
+          <button className="section-rename-btn" type="button" onClick={() => setEditingTitle(true)} title="Rename section">✎</button>
+          <button className="section-del-btn" type="button" onClick={onDelete} title="Delete section">×</button>
+        </div>
+      </div>
+
+      <ul
+        className={`task-list${isDragTarget ? ' drop-target' : ''}`}
+        onDragOver={e => { if (isDragTarget) e.preventDefault() }}
+        onDrop={e => {
+          if (!isDragTarget || !dragState) return
+          e.preventDefault()
+          onDropToSection(dragState.sourceKind, dragState.sourceDayKey, dragState.taskId, dragState.sectionId)
+        }}
+      >
+        {section.tasks.length === 0 ? (
+          <li className={`empty-state-sm${isDragTarget ? ' drop-target' : ''}`}>No items yet.</li>
+        ) : (
+          section.tasks.map(task => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              isEditing={editingSectionTask?.sectionId === section.id && editingSectionTask?.taskId === task.id}
+              onToggle={() => onToggleTask(task.id)}
+              onDelete={() => onDeleteTask(task.id)}
+              onEdit={() => onEditTask(task.id)}
+              onSave={(text) => onSaveTaskEdit(task.id, text)}
+              onCancel={onCancelTaskEdit}
+              onDragStart={e => {
+                if (editingSectionTask?.taskId === task.id) { e.preventDefault(); return }
+                setDragState({ sourceKind: 'section', sectionId: section.id, taskId: task.id })
+                e.dataTransfer.effectAllowed = 'move'
+                e.dataTransfer.setData('text/plain', task.id)
+              }}
+              onDragEnd={() => setDragState(null)}
+            />
+          ))
+        )}
+      </ul>
+
+      <AddForm placeholder="Add an item" onAdd={onAddTask} textareaRef={addRef} />
+    </div>
+  )
+}
+
 export default function Sidebar({
-  dashboard, activeDashboard, lifetimeStats,
-  editingGeneralId, editingBuyId,
+  dashboard, lifetimeStats,
+  editingGeneralId, editingSectionTask,
   dragState, setDragState,
   onAddGeneral, onToggleGeneral, onDeleteGeneral, onEditGeneral, onSaveGeneralEdit, onCancelGeneralEdit,
-  onAddBuy, onToggleBuy, onDeleteBuy, onEditBuy, onSaveBuyEdit, onCancelBuyEdit,
-  onDropToGeneral, onDropToBuy,
+  onAddSection, onRenameSection, onDeleteSection,
+  onAddSectionTask, onToggleSectionTask, onDeleteSectionTask,
+  onEditSectionTask, onSaveSectionTaskEdit, onCancelSectionTaskEdit,
+  onDropToGeneral, onDropToSection,
 }) {
   const generalTextRef = useRef(null)
-  const buyTextRef = useRef(null)
-
-  const buyLabel = activeDashboard === 'SWAY' ? 'Leads & New Business' : 'Things To Buy'
 
   function generalDragOver(e) {
     if (!dragState || dragState.sourceKind !== 'day') return
@@ -110,27 +201,21 @@ export default function Sidebar({
   function generalDrop(e) {
     if (!dragState || dragState.sourceKind !== 'day') return
     e.preventDefault()
-    onDropToGeneral(dragState.sourceDayKey, dragState.taskId)
-  }
-
-  function buyDragOver(e) {
-    const ok = dragState?.sourceKind === 'day' || dragState?.sourceKind === 'general'
-    if (!ok) return
-    e.preventDefault()
-  }
-
-  function buyDrop(e) {
-    const ok = dragState?.sourceKind === 'day' || dragState?.sourceKind === 'general'
-    if (!ok) return
-    e.preventDefault()
-    onDropToBuy(dragState.sourceKind, dragState.sourceDayKey, dragState.taskId)
+    onDropToGeneral(dragState.sourceKind, dragState.sourceDayKey, dragState.taskId, null)
   }
 
   return (
     <aside className="sidebar">
       <div className="panel-card">
         <p className="progress-summary">
-          <strong>{lifetimeStats.completed}/{lifetimeStats.total || 0}</strong> tasks complete &nbsp;·&nbsp; <strong>{lifetimeStats.percent}%</strong> completion
+          <span className="progress-line">
+            <strong className="progress-label">Progress:</strong>
+            {' '}{lifetimeStats.completed}/{lifetimeStats.total || 0} tasks complete
+          </span>
+          <span className="progress-line">
+            <strong className="progress-label">Completion:</strong>
+            {' '}{lifetimeStats.percent}%
+          </span>
         </p>
 
         {/* General To Do */}
@@ -172,50 +257,31 @@ export default function Sidebar({
           <AddForm placeholder="Add an anytime task" onAdd={onAddGeneral} textareaRef={generalTextRef} />
         </div>
 
-        {/* Buy / Leads */}
-        <div className="sidebar-section">
-          <div className="section-head">
-            <strong className="section-title">{buyLabel}</strong>
-          </div>
-
-          <ul
-            className={`task-list${(dragState?.sourceKind === 'day' || dragState?.sourceKind === 'general') ? ' drop-target' : ''}`}
-            onDragOver={buyDragOver}
-            onDrop={buyDrop}
-          >
-            {dashboard.buyTasks.length === 0 ? (
-              <li className={`empty-state-sm${(dragState?.sourceKind === 'day' || dragState?.sourceKind === 'general') ? ' drop-target' : ''}`}>
-                {activeDashboard === 'SWAY' ? 'No leads yet.' : 'No items to buy yet.'}
-              </li>
-            ) : (
-              dashboard.buyTasks.map(task => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  isEditing={editingBuyId === task.id}
-                  onToggle={() => onToggleBuy(task.id)}
-                  onDelete={() => onDeleteBuy(task.id)}
-                  onEdit={onEditBuy}
-                  onSave={(text) => onSaveBuyEdit(task.id, text)}
-                  onCancel={onCancelBuyEdit}
-                  onDragStart={e => {
-                    if (editingBuyId === task.id) { e.preventDefault(); return }
-                    setDragState({ sourceKind: 'buy', taskId: task.id })
-                    e.dataTransfer.effectAllowed = 'move'
-                    e.dataTransfer.setData('text/plain', task.id)
-                  }}
-                  onDragEnd={() => setDragState(null)}
-                />
-              ))
-            )}
-          </ul>
-
-          <AddForm
-            placeholder={activeDashboard === 'SWAY' ? 'Add a lead or prospect' : 'Add something to buy'}
-            onAdd={onAddBuy}
-            textareaRef={buyTextRef}
+        {/* Dynamic sections */}
+        {(dashboard.sections || []).map(section => (
+          <SectionBlock
+            key={section.id}
+            section={section}
+            editingSectionTask={editingSectionTask}
+            dragState={dragState}
+            setDragState={setDragState}
+            onRename={(title) => onRenameSection(section.id, title)}
+            onDelete={() => onDeleteSection(section.id)}
+            onAddTask={(text) => onAddSectionTask(section.id, text)}
+            onToggleTask={(taskId) => onToggleSectionTask(section.id, taskId)}
+            onDeleteTask={(taskId) => onDeleteSectionTask(section.id, taskId)}
+            onEditTask={(taskId) => onEditSectionTask(section.id, taskId)}
+            onSaveTaskEdit={(taskId, text) => onSaveSectionTaskEdit(section.id, taskId, text)}
+            onCancelTaskEdit={onCancelSectionTaskEdit}
+            onDropToSection={(sourceKind, sourceDayKey, taskId, sourceSectionId) =>
+              onDropToSection(section.id, sourceKind, sourceDayKey, taskId, sourceSectionId)
+            }
           />
-        </div>
+        ))}
+
+        <button className="add-section-btn" type="button" onClick={onAddSection}>
+          + Add section
+        </button>
       </div>
     </aside>
   )

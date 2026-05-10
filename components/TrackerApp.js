@@ -78,7 +78,9 @@ function createDashboardState(dashboardName, anchor = new Date()) {
   return {
     activeWeekKey: week.weekKey,
     generalTasks: [],
-    buyTasks: [],
+    sections: [
+      { id: createId(), title: dashboardName === 'SWAY' ? 'Leads & New Business' : 'Things To Buy', tasks: [] },
+    ],
     weeks: { [week.weekKey]: week },
   }
 }
@@ -87,7 +89,16 @@ function initState() {
   const STORAGE_KEY = 'sway-tracker-state-v1'
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-    if (saved?.dashboards) return saved
+    if (saved?.dashboards) {
+      for (const name of Object.keys(saved.dashboards)) {
+        const db = saved.dashboards[name]
+        if (db && db.buyTasks !== undefined && !db.sections) {
+          db.sections = [{ id: createId(), title: name === 'SWAY' ? 'Leads & New Business' : 'Things To Buy', tasks: db.buyTasks || [] }]
+          delete db.buyTasks
+        }
+      }
+      return saved
+    }
   } catch {}
   return {
     activeDashboard: DASHBOARD_NAMES[0],
@@ -106,7 +117,7 @@ export default function TrackerApp({ user }) {
   const [dragState, setDragState] = useState(null)
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [editingGeneralId, setEditingGeneralId] = useState(null)
-  const [editingBuyId, setEditingBuyId] = useState(null)
+  const [editingSectionTask, setEditingSectionTask] = useState(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -191,7 +202,7 @@ export default function TrackerApp({ user }) {
       ensureWeek(next, dateFromKey(currentWeek.weekKey), currentSelectedDayKey)
       return next
     })
-    setEditingTaskId(null); setEditingGeneralId(null); setEditingBuyId(null)
+    setEditingTaskId(null); setEditingGeneralId(null); setEditingSectionTask(null)
   }
 
   function selectDay(key) {
@@ -321,47 +332,78 @@ export default function TrackerApp({ user }) {
     setEditingGeneralId(null)
   }
 
-  // Buy tasks
-  function addBuyTask(text) {
-    setState(prev => {
-      const next = structuredClone(prev)
-      getActiveDashboard(next).buyTasks.unshift({ id: createId(), text, complete: false })
-      return next
-    })
-  }
-
-  function toggleBuyTask(id) {
+  // Sections
+  function addSection() {
     setState(prev => {
       const next = structuredClone(prev)
       const db = getActiveDashboard(next)
-      db.buyTasks = moveCompletedToBottom(db.buyTasks.map(t => t.id === id ? { ...t, complete: !t.complete } : t))
+      db.sections = [...(db.sections || []), { id: createId(), title: 'New Section', tasks: [] }]
       return next
     })
   }
 
-  function deleteBuyTask(id) {
-    if (editingBuyId === id) setEditingBuyId(null)
+  function renameSection(sectionId, newTitle) {
+    const trimmed = newTitle.trim()
+    if (!trimmed) return
     setState(prev => {
       const next = structuredClone(prev)
-      getActiveDashboard(next).buyTasks = getActiveDashboard(next).buyTasks.filter(t => t.id !== id)
+      const section = getActiveDashboard(next).sections?.find(s => s.id === sectionId)
+      if (section) section.title = trimmed
       return next
     })
   }
 
-  function saveBuyEdit(id, text) {
+  function deleteSection(sectionId) {
+    setState(prev => {
+      const next = structuredClone(prev)
+      const db = getActiveDashboard(next)
+      db.sections = (db.sections || []).filter(s => s.id !== sectionId)
+      return next
+    })
+  }
+
+  function addSectionTask(sectionId, text) {
+    setState(prev => {
+      const next = structuredClone(prev)
+      const section = getActiveDashboard(next).sections?.find(s => s.id === sectionId)
+      if (section) section.tasks.unshift({ id: createId(), text, complete: false })
+      return next
+    })
+  }
+
+  function toggleSectionTask(sectionId, taskId) {
+    setState(prev => {
+      const next = structuredClone(prev)
+      const section = getActiveDashboard(next).sections?.find(s => s.id === sectionId)
+      if (section) section.tasks = moveCompletedToBottom(section.tasks.map(t => t.id === taskId ? { ...t, complete: !t.complete } : t))
+      return next
+    })
+  }
+
+  function deleteSectionTask(sectionId, taskId) {
+    if (editingSectionTask?.taskId === taskId) setEditingSectionTask(null)
+    setState(prev => {
+      const next = structuredClone(prev)
+      const section = getActiveDashboard(next).sections?.find(s => s.id === sectionId)
+      if (section) section.tasks = section.tasks.filter(t => t.id !== taskId)
+      return next
+    })
+  }
+
+  function saveSectionTaskEdit(sectionId, taskId, text) {
     const trimmed = text.trim()
-    if (!trimmed) { setEditingBuyId(null); return }
+    if (!trimmed) { setEditingSectionTask(null); return }
     setState(prev => {
       const next = structuredClone(prev)
-      const db = getActiveDashboard(next)
-      db.buyTasks = db.buyTasks.map(t => t.id === id ? { ...t, text: trimmed } : t)
+      const section = getActiveDashboard(next).sections?.find(s => s.id === sectionId)
+      if (section) section.tasks = section.tasks.map(t => t.id === taskId ? { ...t, text: trimmed } : t)
       return next
     })
-    setEditingBuyId(null)
+    setEditingSectionTask(null)
   }
 
   // Drag and drop
-  function moveTaskToDay(targetDayKey, taskId, sourceKind, sourceDayKey) {
+  function moveTaskToDay(targetDayKey, taskId, sourceKind, sourceDayKey, sourceSectionId) {
     setState(prev => {
       const next = structuredClone(prev)
       const week = getActiveWeek(next)
@@ -372,10 +414,12 @@ export default function TrackerApp({ user }) {
         const idx = db.generalTasks.findIndex(t => t.id === taskId)
         if (idx === -1) return next
         ;[task] = db.generalTasks.splice(idx, 1)
-      } else if (sourceKind === 'buy') {
-        const idx = db.buyTasks.findIndex(t => t.id === taskId)
+      } else if (sourceKind === 'section') {
+        const section = (db.sections || []).find(s => s.id === sourceSectionId)
+        if (!section) return next
+        const idx = section.tasks.findIndex(t => t.id === taskId)
         if (idx === -1) return next
-        ;[task] = db.buyTasks.splice(idx, 1)
+        ;[task] = section.tasks.splice(idx, 1)
       } else {
         if (sourceDayKey === targetDayKey) return next
         const sourceDay = week.days[sourceDayKey]
@@ -390,42 +434,59 @@ export default function TrackerApp({ user }) {
     })
   }
 
-  function moveTaskToGeneral(sourceDayKey, taskId) {
+  function moveTaskToGeneral(sourceDayKey, taskId, sourceKind, sourceSectionId) {
     setState(prev => {
       const next = structuredClone(prev)
       const week = getActiveWeek(next)
       const db = getActiveDashboard(next)
-      const sourceDay = week.days[sourceDayKey]
-      const idx = sourceDay.tasks.findIndex(t => t.id === taskId)
-      if (idx === -1) return next
-      const [task] = sourceDay.tasks.splice(idx, 1)
+      let task = null
+
+      if (sourceKind === 'section') {
+        const section = (db.sections || []).find(s => s.id === sourceSectionId)
+        if (!section) return next
+        const idx = section.tasks.findIndex(t => t.id === taskId)
+        if (idx === -1) return next
+        ;[task] = section.tasks.splice(idx, 1)
+      } else {
+        const sourceDay = week.days[sourceDayKey]
+        const idx = sourceDay.tasks.findIndex(t => t.id === taskId)
+        if (idx === -1) return next
+        ;[task] = sourceDay.tasks.splice(idx, 1)
+      }
+
       db.generalTasks.unshift(task)
       return next
     })
   }
 
-  function moveTaskToBuy(sourceDayKey, taskId) {
+  function moveTaskToSection(targetSectionId, sourceKind, sourceDayKey, taskId, sourceSectionId) {
     setState(prev => {
       const next = structuredClone(prev)
       const week = getActiveWeek(next)
       const db = getActiveDashboard(next)
-      const sourceDay = week.days[sourceDayKey]
-      const idx = sourceDay.tasks.findIndex(t => t.id === taskId)
-      if (idx === -1) return next
-      const [task] = sourceDay.tasks.splice(idx, 1)
-      db.buyTasks.unshift(task)
-      return next
-    })
-  }
+      const targetSection = (db.sections || []).find(s => s.id === targetSectionId)
+      if (!targetSection) return next
+      let task = null
 
-  function moveGeneralToBuy(taskId) {
-    setState(prev => {
-      const next = structuredClone(prev)
-      const db = getActiveDashboard(next)
-      const idx = db.generalTasks.findIndex(t => t.id === taskId)
-      if (idx === -1) return next
-      const [task] = db.generalTasks.splice(idx, 1)
-      db.buyTasks.unshift(task)
+      if (sourceKind === 'general') {
+        const idx = db.generalTasks.findIndex(t => t.id === taskId)
+        if (idx === -1) return next
+        ;[task] = db.generalTasks.splice(idx, 1)
+      } else if (sourceKind === 'section') {
+        if (sourceSectionId === targetSectionId) return next
+        const sourceSection = (db.sections || []).find(s => s.id === sourceSectionId)
+        if (!sourceSection) return next
+        const idx = sourceSection.tasks.findIndex(t => t.id === taskId)
+        if (idx === -1) return next
+        ;[task] = sourceSection.tasks.splice(idx, 1)
+      } else {
+        const sourceDay = week.days[sourceDayKey]
+        const idx = sourceDay.tasks.findIndex(t => t.id === taskId)
+        if (idx === -1) return next
+        ;[task] = sourceDay.tasks.splice(idx, 1)
+      }
+
+      targetSection.tasks.unshift(task)
       return next
     })
   }
@@ -455,8 +516,14 @@ export default function TrackerApp({ user }) {
   function getLifetimeStats(s) {
     const db = getActiveDashboard(s)
     const allDays = Object.values(db.weeks).flatMap(w => Object.values(w.days))
-    const total = allDays.reduce((sum, d) => sum + d.tasks.length, 0)
-    const completed = allDays.reduce((sum, d) => sum + d.tasks.filter(t => t.complete).length, 0)
+    const dayTotal = allDays.reduce((sum, d) => sum + d.tasks.length, 0)
+    const dayCompleted = allDays.reduce((sum, d) => sum + d.tasks.filter(t => t.complete).length, 0)
+    const genTotal = db.generalTasks.length
+    const genCompleted = db.generalTasks.filter(t => t.complete).length
+    const secTotal = (db.sections || []).reduce((sum, s) => sum + s.tasks.length, 0)
+    const secCompleted = (db.sections || []).reduce((sum, s) => sum + s.tasks.filter(t => t.complete).length, 0)
+    const total = dayTotal + genTotal + secTotal
+    const completed = dayCompleted + genCompleted + secCompleted
     return { total, completed, percent: total ? Math.round((completed / total) * 100) : 0 }
   }
 
@@ -531,19 +598,19 @@ export default function TrackerApp({ user }) {
                 </div>
                 <div className="stat-grid">
                   <div className="stat-item">
-                    <span className="stat-label">Selected</span>
-                    <span className="stat-value">{selectedDay.dayLabel.slice(0, 3)}</span>
+                    <span className="stat-label">Selected day</span>
+                    <span className="stat-value">{selectedDay.dayLabel}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Done</span>
+                    <span className="stat-label">Completed</span>
                     <span className="stat-value">{dayStats.completed}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Left</span>
+                    <span className="stat-label">Remaining</span>
                     <span className="stat-value">{dayStats.remaining}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Total</span>
+                    <span className="stat-label">Total tasks</span>
                     <span className="stat-value">{dayStats.total}</span>
                   </div>
                 </div>
@@ -566,7 +633,7 @@ export default function TrackerApp({ user }) {
           dragState={dragState}
           onDropToDay={(dayKey) => {
             if (!dragState) return
-            moveTaskToDay(dayKey, dragState.taskId, dragState.sourceKind, dragState.sourceDayKey)
+            moveTaskToDay(dayKey, dragState.taskId, dragState.sourceKind, dragState.sourceDayKey, dragState.sectionId)
             setDragState(null)
           }}
         />
@@ -575,10 +642,9 @@ export default function TrackerApp({ user }) {
         <div className="content">
           <Sidebar
             dashboard={dashboard}
-            activeDashboard={state.activeDashboard}
             lifetimeStats={lifetimeStats}
             editingGeneralId={editingGeneralId}
-            editingBuyId={editingBuyId}
+            editingSectionTask={editingSectionTask}
             dragState={dragState}
             setDragState={setDragState}
             onAddGeneral={addGeneralTask}
@@ -587,16 +653,21 @@ export default function TrackerApp({ user }) {
             onEditGeneral={(id) => setEditingGeneralId(id)}
             onSaveGeneralEdit={saveGeneralEdit}
             onCancelGeneralEdit={() => setEditingGeneralId(null)}
-            onAddBuy={addBuyTask}
-            onToggleBuy={toggleBuyTask}
-            onDeleteBuy={deleteBuyTask}
-            onEditBuy={(id) => setEditingBuyId(id)}
-            onSaveBuyEdit={saveBuyEdit}
-            onCancelBuyEdit={() => setEditingBuyId(null)}
-            onDropToGeneral={(sourceDayKey, taskId) => { moveTaskToGeneral(sourceDayKey, taskId); setDragState(null) }}
-            onDropToBuy={(sourceKind, sourceDayKey, taskId) => {
-              if (sourceKind === 'general') { moveGeneralToBuy(taskId) }
-              else { moveTaskToBuy(sourceDayKey, taskId) }
+            onAddSection={addSection}
+            onRenameSection={renameSection}
+            onDeleteSection={deleteSection}
+            onAddSectionTask={addSectionTask}
+            onToggleSectionTask={toggleSectionTask}
+            onDeleteSectionTask={deleteSectionTask}
+            onEditSectionTask={(sectionId, taskId) => setEditingSectionTask({ sectionId, taskId })}
+            onSaveSectionTaskEdit={saveSectionTaskEdit}
+            onCancelSectionTaskEdit={() => setEditingSectionTask(null)}
+            onDropToGeneral={(sourceKind, sourceDayKey, taskId, sourceSectionId) => {
+              moveTaskToGeneral(sourceDayKey, taskId, sourceKind, sourceSectionId)
+              setDragState(null)
+            }}
+            onDropToSection={(targetSectionId, sourceKind, sourceDayKey, taskId, sourceSectionId) => {
+              moveTaskToSection(targetSectionId, sourceKind, sourceDayKey, taskId, sourceSectionId)
               setDragState(null)
             }}
           />
