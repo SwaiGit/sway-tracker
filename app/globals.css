@@ -232,6 +232,7 @@ button, input, textarea, select {
     linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
   padding: 20px;
   transition: background 0.3s ease;
+  position: relative;
 }
 
 @media (max-width: 600px) {
@@ -1389,6 +1390,14 @@ button, input, textarea, select {
   .main-add-btn { min-height: 52px; }
 
   .week-range { font-size: 0.68rem; }
+
+  /* Avatar: not sticky on mobile, sits top-right */
+  .avatar-anchor {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    left: auto;
+  }
 
   /* Mobile bottom tab bar */
   .mobile-tabs {
