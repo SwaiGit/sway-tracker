@@ -577,6 +577,8 @@ export default function TrackerApp({ user }) {
   return (
     <div className="app-bg" data-dashboard={state.activeDashboard}>
       <div className="shell">
+        <button className="sign-out-link" onClick={signOut} type="button">Sign out</button>
+
         {/* Header */}
         <header className="app-header">
           <div className="header-inner">
@@ -588,7 +590,6 @@ export default function TrackerApp({ user }) {
                 </div>
                 <div className="header-user">
                   <div className="user-avatar" title={displayName}>{initials}</div>
-                  <button className="sign-out-btn" onClick={signOut}>Sign out</button>
                 </div>
               </div>
               <div className="dashboard-switcher">
@@ -627,7 +628,7 @@ export default function TrackerApp({ user }) {
                 </div>
                 <div className="stat-grid">
                   <div className="stat-item">
-                    <span className="stat-label">Selected day</span>
+                    <span className="stat-label">Selected Day</span>
                     <span className="stat-value">{selectedDay.dayLabel}</span>
                   </div>
                   <div className="stat-item">
@@ -639,7 +640,7 @@ export default function TrackerApp({ user }) {
                     <span className="stat-value">{dayStats.remaining}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Total tasks</span>
+                    <span className="stat-label">Total Tasks</span>
                     <span className="stat-value">{dayStats.total}</span>
                   </div>
                 </div>

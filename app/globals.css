@@ -251,6 +251,7 @@ button, input, textarea, select {
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
   overflow: hidden;
+  position: relative;
 }
 
 @media (max-width: 600px) {
@@ -301,7 +302,7 @@ button, input, textarea, select {
 .eyebrow {
   display: inline-block;
   color: var(--gold);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -311,7 +312,7 @@ button, input, textarea, select {
 .header-title {
   font-family: var(--font-body);
   margin: 0;
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-size: clamp(2rem, 3.5vw, 3rem);
   font-weight: 800;
   line-height: 1;
   color: var(--text);
@@ -330,12 +331,12 @@ button, input, textarea, select {
 .dashboard-tab {
   border: 1px solid transparent;
   border-radius: 13px;
-  padding: 9px 16px;
+  padding: 9px 18px;
   background: transparent;
   color: var(--muted);
-  font-weight: 800;
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
+  font-weight: 900;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
   white-space: nowrap;
@@ -438,16 +439,14 @@ button, input, textarea, select {
 }
 
 .stat-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  font-size: 0.9rem;
+  font-weight: 400;
   color: var(--muted);
   white-space: nowrap;
 }
 
 .stat-value {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: var(--text);
 }
@@ -481,11 +480,11 @@ button, input, textarea, select {
 }
 
 .widget-label {
-  font-size: 0.58rem;
-  font-weight: 800;
+  font-size: 0.62rem;
+  font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.65;
+  opacity: 0.85;
   display: block;
 }
 
@@ -536,21 +535,25 @@ button, input, textarea, select {
   flex-shrink: 0;
 }
 
-.sign-out-btn {
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 6px 10px;
-  background: rgba(255,255,255,0.56);
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 700;
+.sign-out-link {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: rgba(13,68,87,0.38);
+  font-size: 0.72rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+  font-family: inherit;
 }
 
-.sign-out-btn:hover {
-  background: rgba(255,255,255,0.9);
-  color: var(--text);
+.sign-out-link:hover {
+  color: var(--muted);
 }
 
 /* Week bar */
@@ -748,8 +751,8 @@ button, input, textarea, select {
 }
 
 .section-title {
-  font-size: 1rem;
-  font-weight: 800;
+  font-size: 1.05rem;
+  font-weight: 900;
   color: var(--text);
   flex: 1;
   cursor: default;
