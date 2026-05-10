@@ -485,15 +485,12 @@ export default function TrackerApp({ user }) {
         <header className="app-header">
           <div className="header-inner">
             <div className="header-left">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <div className="header-brand">
-                  <img src="/assets/sway-logo.png" alt="Sway" className="header-logo" />
-                  <div>
-                    <span className="eyebrow">Weekly Workflow</span>
-                    <h1 className="header-title">Task Tracker</h1>
-                  </div>
+              <div className="header-brand">
+                <div>
+                  <span className="eyebrow">Weekly Workflow</span>
+                  <h1 className="header-title">Task Tracker</h1>
                 </div>
-                <div className="header-user" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="header-user">
                   <div className="user-avatar" title={displayName}>{initials}</div>
                   <button className="sign-out-btn" onClick={signOut}>Sign out</button>
                 </div>
@@ -516,11 +513,11 @@ export default function TrackerApp({ user }) {
               {/* Stats ring */}
               <div className="header-stats">
                 <div className="stat-ring-wrap">
-                  <svg className="stat-ring" viewBox="0 0 72 72" aria-hidden="true">
-                    <circle className="ring-track" cx="36" cy="36" r="33" />
+                  <svg className="stat-ring" viewBox="0 0 80 80" aria-hidden="true">
+                    <circle className="ring-track" cx="40" cy="40" r="33" />
                     <circle
                       className="ring-fill"
-                      cx="36" cy="36" r="33"
+                      cx="40" cy="40" r="33"
                       style={{
                         strokeDashoffset: 207.3 - (dayStats.percent / 100) * 207.3,
                         stroke: dayStats.percent === 100 && dayStats.total > 0 ? 'var(--success)' : 'var(--gold)',

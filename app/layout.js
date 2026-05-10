@@ -3,13 +3,18 @@ import './globals.css'
 export const metadata = {
   title: 'Task Tracker — Sway',
   description: 'Weekly task management for the Sway team',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
-  themeColor: '#0d4457',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Sway Tracker',
   },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#0d4457',
 }
 
 export default function RootLayout({ children }) {

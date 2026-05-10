@@ -276,7 +276,7 @@ button, input, textarea, select {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 16px;
-  align-items: start;
+  align-items: center;
 }
 
 .header-left {
@@ -289,6 +289,7 @@ button, input, textarea, select {
 .header-brand {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
 }
 
@@ -318,6 +319,7 @@ button, input, textarea, select {
 
 .dashboard-switcher {
   display: inline-flex;
+  align-self: flex-start;
   gap: 6px;
   padding: 5px;
   border-radius: 18px;
@@ -354,9 +356,9 @@ button, input, textarea, select {
 /* Header widgets */
 .header-right {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
 }
 
 .header-stats {
@@ -371,14 +373,14 @@ button, input, textarea, select {
 
 .stat-ring-wrap {
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   flex-shrink: 0;
 }
 
 .stat-ring {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   transform: rotate(-90deg);
 }
 
@@ -509,6 +511,7 @@ button, input, textarea, select {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .user-avatar {
