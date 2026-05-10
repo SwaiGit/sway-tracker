@@ -69,7 +69,7 @@ export default function WeekBar({ week, weekDays, onPrev, onNext, onJump, onSele
                   <div className="mini-bar-fill" style={{ width: `${stats.percent}%` }} />
                 </div>
                 <div className="day-meta">
-                  <span>{stats.completed}/{stats.total}</span>
+                  <span>{stats.completed}/{stats.total} done</span>
                   <span>{stats.percent}%</span>
                 </div>
               </button>
