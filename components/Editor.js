@@ -121,7 +121,6 @@ export default function Editor({
           <h2 className="editor-title">{activeDashboard === 'SWAY' ? 'Professional' : activeDashboard} · {selectedDay.dayLabel} Tasks</h2>
           <p className="editor-sub">{selectedDay.dateLabel}</p>
         </div>
-        <button className="reset-btn" onClick={onReset} type="button">↺ Reset</button>
       </div>
 
       {isAllDone && (
@@ -184,6 +183,8 @@ export default function Editor({
         />
         <button className="main-add-btn" type="submit">Add Task</button>
       </form>
+
+      <button className="reset-btn" onClick={onReset} type="button">↺ Reset</button>
     </section>
   )
 }

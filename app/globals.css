@@ -1374,6 +1374,9 @@ button, input, textarea, select {
 /* Mobile bottom tab bar — hidden on desktop */
 .mobile-tabs { display: none; }
 
+/* Mobile day stats strip — hidden on desktop */
+.mobile-day-stats { display: none; }
+
 /* Responsive: mobile */
 @media (max-width: 768px) {
   .app-bg { padding: 0; }
@@ -1401,7 +1404,8 @@ button, input, textarea, select {
   .dashboard-switcher { margin-top: 0; }
   .dashboard-tab { padding: 7px 14px; font-size: 0.8rem; }
 
-  .week-bar { padding: 10px 12px 14px; grid-template-columns: 36px 1fr 36px; }
+  .week-bar { padding: 10px 12px 10px; grid-template-columns: 36px 1fr 36px; }
+  .mobile-day-stats { grid-column: 1 / -1; }
 
   /* Scrollable week strip on mobile */
   .week-center { overflow: hidden; }
@@ -1445,12 +1449,74 @@ button, input, textarea, select {
 
   .editor-toolbar { flex-direction: column; gap: 10px; }
   .editor-toolbar > div:first-child { width: 100%; }
-  .reset-btn { width: 100%; text-align: center; }
+  .reset-btn { display: block; text-align: center; margin: 8px auto 0; }
 
   .main-add-form { grid-template-columns: 1fr; }
   .main-add-btn { min-height: 52px; }
 
   .week-range { font-size: 0.68rem; }
+
+  /* Day stats strip in week bar */
+  .mobile-day-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    grid-column: 1 / -1;
+    padding: 12px 16px 4px;
+  }
+
+  .mobile-ring-wrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-ring {
+    width: 56px;
+    height: 56px;
+    position: absolute;
+    inset: 0;
+  }
+
+  .mobile-ring-pct {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: white;
+    position: relative;
+    z-index: 1;
+  }
+
+  .mobile-day-stat-items {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 20px;
+    flex: 1;
+  }
+
+  .mobile-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .mobile-stat-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.55);
+  }
+
+  .mobile-stat-value {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: white;
+  }
 
   /* Time + weather strip */
   .mobile-info {
