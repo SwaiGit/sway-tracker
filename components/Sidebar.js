@@ -209,7 +209,7 @@ export default function Sidebar({
       <div className="panel-card">
         <p className="progress-summary">
           <span className="progress-line">
-            <strong className="progress-label">Progress:</strong>
+            <strong className="progress-label">This Week:</strong>
             {' '}{lifetimeStats.completed}/{lifetimeStats.total || 0} tasks complete
           </span>
           <span className="progress-line">

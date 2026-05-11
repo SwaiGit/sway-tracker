@@ -567,17 +567,11 @@ export default function TrackerApp({ user }) {
   }
 
   // Lifetime stats
-  function getLifetimeStats(s) {
-    const db = getActiveDashboard(s)
-    const allDays = Object.values(db.weeks).flatMap(w => Object.values(w.days))
-    const dayTotal = allDays.reduce((sum, d) => sum + d.tasks.length, 0)
-    const dayCompleted = allDays.reduce((sum, d) => sum + d.tasks.filter(t => t.complete).length, 0)
-    const genTotal = db.generalTasks.length
-    const genCompleted = db.generalTasks.filter(t => t.complete).length
-    const secTotal = (db.sections || []).reduce((sum, s) => sum + s.tasks.length, 0)
-    const secCompleted = (db.sections || []).reduce((sum, s) => sum + s.tasks.filter(t => t.complete).length, 0)
-    const total = dayTotal + genTotal + secTotal
-    const completed = dayCompleted + genCompleted + secCompleted
+  function getWeekStats(s) {
+    const week = getActiveWeek(s)
+    const days = Object.values(week.days)
+    const total = days.reduce((sum, d) => sum + d.tasks.length, 0)
+    const completed = days.reduce((sum, d) => sum + d.tasks.filter(t => t.complete).length, 0)
     return { total, completed, percent: total ? Math.round((completed / total) * 100) : 0 }
   }
 
@@ -593,7 +587,7 @@ export default function TrackerApp({ user }) {
   const week = getActiveWeek(state)
   const selectedDay = getSelectedDay(state)
   const dayStats = getDayStats(selectedDay)
-  const lifetimeStats = getLifetimeStats(state)
+  const lifetimeStats = getWeekStats(state)
   const weekDays = getWeekDays(dateFromKey(week.weekKey))
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'You'
