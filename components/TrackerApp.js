@@ -119,7 +119,6 @@ function moveCompletedToBottom(tasks) {
 
 export default function TrackerApp({ user }) {
   const [state, setStateRaw] = useState(null)
-  const [syncing, setSyncing] = useState(true)
   const [dragState, setDragState] = useState(null)
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [editingGeneralId, setEditingGeneralId] = useState(null)
@@ -139,8 +138,10 @@ export default function TrackerApp({ user }) {
   }, [avatarOpen])
   const router = useRouter()
   const supabase = createClient()
-  const saveTimer = useRef(null)
+  // cloudReady blocks Supabase writes until the initial fetch completes,
+  // preventing a device with empty localStorage from overwriting cloud data.
   const cloudReady = useRef(false)
+  const lastFetchAt = useRef(0)
 
   async function fetchFromCloud() {
     if (!user?.id) return
@@ -155,74 +156,67 @@ export default function TrackerApp({ user }) {
       setStateRaw(migrated)
       try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(migrated)) } catch {}
     }
+    lastFetchAt.current = Date.now()
   }
 
-  // Load: block render until cloud sync completes to prevent blank state from overwriting cloud data
+  // Load: show localStorage immediately, then let Supabase overwrite with authoritative state
   useEffect(() => {
+    const local = initState()
+    setStateRaw(local)
+
     async function initialSync() {
-      if (!user?.id) {
-        const local = initState()
-        setStateRaw(local)
-        cloudReady.current = true
-        setSyncing(false)
-        return
-      }
+      if (!user?.id) { cloudReady.current = true; return }
       const { data, error } = await supabase
         .from('user_data')
         .select('state')
         .eq('user_id', user.id)
         .single()
+      if (error && error.code !== 'PGRST116') { cloudReady.current = true; return }
       if (data?.state) {
         const migrated = migrateState(data.state) || data.state
         setStateRaw(migrated)
         try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(migrated)) } catch {}
       } else {
-        const local = initState()
-        setStateRaw(local)
-        if (!error || error.code === 'PGRST116') {
-          // No cloud record yet — push local state up
-          await supabase.from('user_data').upsert({ user_id: user.id, state: local, updated_at: new Date().toISOString() })
-        }
+        // No cloud record yet — push local state up
+        await supabase.from('user_data').upsert({ user_id: user.id, state: local, updated_at: new Date().toISOString() })
       }
       cloudReady.current = true
-      setSyncing(false)
+      lastFetchAt.current = Date.now()
     }
     initialSync()
   }, [user?.id])
 
-  // Re-sync when returning to tab/app — covers visibilitychange, pageshow (iOS), and focus
+  // Re-sync when returning to the app from another tab/app/device.
+  // Throttled to once per 5 seconds so window focus doesn't spam requests.
   useEffect(() => {
+    function maybeSync() {
+      if (Date.now() - lastFetchAt.current < 5000) return
+      fetchFromCloud()
+    }
     function handleVisibility() {
-      if (document.visibilityState === 'visible') fetchFromCloud()
+      if (document.visibilityState === 'visible') maybeSync()
     }
     function handlePageShow(e) {
-      // e.persisted = true means restored from bfcache (common on iOS Safari)
-      if (e.persisted) fetchFromCloud()
-    }
-    function handleFocus() {
-      fetchFromCloud()
+      if (e.persisted) maybeSync() // iOS bfcache restore
     }
     document.addEventListener('visibilitychange', handleVisibility)
     window.addEventListener('pageshow', handlePageShow)
-    window.addEventListener('focus', handleFocus)
+    window.addEventListener('focus', maybeSync)
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility)
       window.removeEventListener('pageshow', handlePageShow)
-      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('focus', maybeSync)
     }
   }, [user?.id])
 
-  // Persist: localStorage immediately + debounced Supabase upsert
-  // cloudReady gate ensures we never overwrite cloud data before initial fetch
+  // Persist: write to localStorage immediately and to Supabase immediately (no debounce).
+  // Task edits happen on discrete actions (not keystrokes), so instant saves are fine
+  // and they ensure the other device always fetches up-to-date data.
   useEffect(() => {
     if (!state) return
     try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(state)) } catch {}
-
     if (!user?.id || !cloudReady.current) return
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => {
-      supabase.from('user_data').upsert({ user_id: user.id, state, updated_at: new Date().toISOString() })
-    }, 800)
+    supabase.from('user_data').upsert({ user_id: user.id, state, updated_at: new Date().toISOString() })
   }, [state])
 
   function setState(updater) {
@@ -622,7 +616,7 @@ export default function TrackerApp({ user }) {
     return { total, completed, percent: total ? Math.round((completed / total) * 100) : 0 }
   }
 
-  if (!state || syncing) {
+  if (!state) {
     return (
       <div className="loading-screen">
         <div className="loading-dot" />
