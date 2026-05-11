@@ -725,8 +725,6 @@ export default function TrackerApp({ user }) {
           onToday={jumpToToday}
           onSelectDay={selectDay}
           getDayStats={getDayStats}
-          dayStats={dayStats}
-          selectedDay={selectedDay}
           dragState={dragState}
           onDropToDay={(dayKey) => {
             if (!dragState) return
@@ -773,6 +771,7 @@ export default function TrackerApp({ user }) {
             selectedDay={selectedDay}
             activeDashboard={state.activeDashboard}
             dayStats={dayStats}
+            weekStats={lifetimeStats}
             editingTaskId={editingTaskId}
             dragState={dragState}
             setDragState={setDragState}

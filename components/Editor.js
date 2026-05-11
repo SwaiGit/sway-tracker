@@ -79,7 +79,7 @@ function TaskItem({ task, dayKey, isEditing, onToggle, onDelete, onEdit, onSave,
 }
 
 export default function Editor({
-  selectedDay, activeDashboard, dayStats, editingTaskId,
+  selectedDay, activeDashboard, dayStats, weekStats, editingTaskId,
   dragState, setDragState,
   onAddTask, onToggleTask, onDeleteTask, onEditTask, onSaveEdit, onCancelEdit,
   onReorder, onReset, onDropToDay,
@@ -116,6 +116,13 @@ export default function Editor({
 
   return (
     <section className="editor">
+      {weekStats && (
+        <p className="mobile-week-stats">
+          <strong className="progress-label">This Week:</strong>{' '}{weekStats.completed}/{weekStats.total || 0} tasks complete
+          {' · '}
+          <strong className="progress-label">Completion:</strong>{' '}{weekStats.percent}%
+        </p>
+      )}
       <div className="editor-toolbar">
         <div>
           <h2 className="editor-title">{activeDashboard === 'SWAY' ? 'Professional' : activeDashboard} · {selectedDay.dayLabel} Tasks</h2>

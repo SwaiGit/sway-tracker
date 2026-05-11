@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 
-export default function WeekBar({ week, weekDays, onPrev, onNext, onJump, onToday, onSelectDay, getDayStats, dragState, onDropToDay, dayStats, selectedDay }) {
+export default function WeekBar({ week, weekDays, onPrev, onNext, onJump, onToday, onSelectDay, getDayStats, dragState, onDropToDay }) {
   const dateInputRef = useRef(null)
 
   const firstDay = weekDays[0]
@@ -82,38 +82,6 @@ export default function WeekBar({ week, weekDays, onPrev, onNext, onJump, onToda
       </div>
 
       <button className="week-nav" onClick={onNext} aria-label="Next week" type="button">›</button>
-
-      {/* Mobile-only day stats strip */}
-      {dayStats && selectedDay && (
-        <div className="mobile-day-stats">
-          <div className="mobile-ring-wrap">
-            <svg className="mobile-ring" viewBox="0 0 56 56" aria-hidden="true">
-              <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="5" />
-              <circle
-                cx="28" cy="28" r="22"
-                fill="none"
-                strokeWidth="5"
-                strokeLinecap="round"
-                style={{
-                  stroke: dayStats.percent === 100 && dayStats.total > 0 ? '#1b6c52' : '#f27f78',
-                  strokeDasharray: 138.2,
-                  strokeDashoffset: 138.2 - (dayStats.percent / 100) * 138.2,
-                  transform: 'rotate(-90deg)',
-                  transformOrigin: '50% 50%',
-                  transition: 'stroke-dashoffset 0.4s ease',
-                }}
-              />
-            </svg>
-            <span className="mobile-ring-pct">{dayStats.percent}%</span>
-          </div>
-          <div className="mobile-day-stat-items">
-            <div className="mobile-stat-row"><span className="mobile-stat-label">Day</span><span className="mobile-stat-value">{selectedDay.dayLabel}</span></div>
-            <div className="mobile-stat-row"><span className="mobile-stat-label">Done</span><span className="mobile-stat-value">{dayStats.completed}</span></div>
-            <div className="mobile-stat-row"><span className="mobile-stat-label">Left</span><span className="mobile-stat-value">{dayStats.remaining}</span></div>
-            <div className="mobile-stat-row"><span className="mobile-stat-label">Total</span><span className="mobile-stat-value">{dayStats.total}</span></div>
-          </div>
-        </div>
-      )}
     </section>
   )
 }
