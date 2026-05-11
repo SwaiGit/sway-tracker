@@ -682,6 +682,27 @@ button, input, textarea, select {
   color: white;
 }
 
+@media (max-width: 768px) {
+  .today-btn {
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    letter-spacing: 0;
+    text-transform: none;
+    padding: 4px 2px;
+    min-height: unset;
+  }
+
+  .today-btn:hover {
+    background: none;
+    opacity: 0.8;
+  }
+}
+
 .cal-btn {
   border: 0;
   background: transparent;

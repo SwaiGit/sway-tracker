@@ -20,7 +20,17 @@ export default function WeekBar({ week, weekDays, onPrev, onNext, onJump, onToda
           <span className="week-range">{rangeLabel}</span>
           <div className="week-bar-actions">
             <button className="today-btn" type="button" onClick={onToday}>Today</button>
-            <label className="cal-btn" aria-label="Jump to date" style={{ position: 'relative' }}>
+            <label
+              className="cal-btn"
+              aria-label="Jump to date"
+              style={{ position: 'relative' }}
+              onClick={e => {
+                if (dateInputRef.current?.showPicker) {
+                  e.preventDefault()
+                  dateInputRef.current.showPicker()
+                }
+              }}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="4" y="5" width="16" height="15" rx="2"/>
                 <path d="M8 3v4M16 3v4M4 10h16"/>
