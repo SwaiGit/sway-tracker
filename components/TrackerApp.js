@@ -139,22 +139,36 @@ export default function TrackerApp({ user }) {
   const router = useRouter()
   const supabase = createClient()
   const saveTimer = useRef(null)
+  const pendingState = useRef(null)
+
+  async function fetchFromCloud() {
+    if (!user?.id) return
+    const { data, error } = await supabase
+      .from('user_data')
+      .select('state, updated_at')
+      .eq('user_id', user.id)
+      .single()
+    if (error && error.code !== 'PGRST116') return
+    if (data?.state) {
+      const migrated = migrateState(data.state) || data.state
+      setStateRaw(migrated)
+      try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(migrated)) } catch {}
+    }
+  }
 
   // Load: show localStorage immediately, then sync from Supabase
   useEffect(() => {
     const local = initState()
     setStateRaw(local)
 
-    async function syncFromCloud() {
+    async function initialSync() {
       if (!user?.id) return
       const { data, error } = await supabase
         .from('user_data')
         .select('state')
         .eq('user_id', user.id)
         .single()
-
       if (error && error.code !== 'PGRST116') return
-
       if (data?.state) {
         const migrated = migrateState(data.state) || data.state
         setStateRaw(migrated)
@@ -163,19 +177,43 @@ export default function TrackerApp({ user }) {
         supabase.from('user_data').upsert({ user_id: user.id, state: local, updated_at: new Date().toISOString() })
       }
     }
-    syncFromCloud()
+    initialSync()
   }, [user?.id])
 
-  // Persist: localStorage immediately + debounced Supabase upsert
+  // Re-sync from Supabase when tab/app becomes visible again
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState !== 'visible') return
+      // Flush any pending save first, then re-fetch
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current)
+        saveTimer.current = null
+        if (pendingState.current && user?.id) {
+          supabase.from('user_data')
+            .upsert({ user_id: user.id, state: pendingState.current, updated_at: new Date().toISOString() })
+            .then(() => fetchFromCloud())
+          return
+        }
+      }
+      fetchFromCloud()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [user?.id])
+
+  // Persist: localStorage immediately + debounced Supabase upsert (800ms)
   useEffect(() => {
     if (!state) return
     try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(state)) } catch {}
 
     if (!user?.id) return
+    pendingState.current = state
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       supabase.from('user_data').upsert({ user_id: user.id, state, updated_at: new Date().toISOString() })
-    }, 1500)
+      pendingState.current = null
+      saveTimer.current = null
+    }, 800)
   }, [state])
 
   function setState(updater) {
