@@ -119,6 +119,7 @@ function moveCompletedToBottom(tasks) {
 
 export default function TrackerApp({ user }) {
   const [state, setStateRaw] = useState(null)
+  const [saveStatus, setSaveStatus] = useState('idle') // 'idle' | 'saving' | 'error'
   const [dragState, setDragState] = useState(null)
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [editingGeneralId, setEditingGeneralId] = useState(null)
@@ -178,7 +179,10 @@ export default function TrackerApp({ user }) {
         try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(migrated)) } catch {}
       } else {
         // No cloud record yet — push local state up
-        await supabase.from('user_data').upsert({ user_id: user.id, state: local, updated_at: new Date().toISOString() })
+        await supabase.from('user_data').upsert(
+          { user_id: user.id, state: local, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        )
       }
       cloudReady.current = true
       lastFetchAt.current = Date.now()
@@ -209,14 +213,29 @@ export default function TrackerApp({ user }) {
     }
   }, [user?.id])
 
-  // Persist: write to localStorage immediately and to Supabase immediately (no debounce).
-  // Task edits happen on discrete actions (not keystrokes), so instant saves are fine
-  // and they ensure the other device always fetches up-to-date data.
+  // Persist: write to localStorage immediately and await Supabase save.
+  // Task edits are discrete actions (not keystrokes) so no debounce needed.
   useEffect(() => {
     if (!state) return
     try { localStorage.setItem('sway-tracker-state-v1', JSON.stringify(state)) } catch {}
     if (!user?.id || !cloudReady.current) return
-    supabase.from('user_data').upsert({ user_id: user.id, state, updated_at: new Date().toISOString() })
+
+    setSaveStatus('saving')
+    const snapshot = state
+    supabase
+      .from('user_data')
+      .upsert(
+        { user_id: user.id, state: snapshot, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      )
+      .then(({ error }) => {
+        if (error) {
+          console.error('[Sway] Save failed:', error.message, error.code, error.details)
+          setSaveStatus('error')
+        } else {
+          setSaveStatus('idle')
+        }
+      })
   }, [state])
 
   function setState(updater) {
@@ -658,6 +677,13 @@ export default function TrackerApp({ user }) {
           </div>
         )}
       </div>
+
+      {/* Save status — only visible when saving or errored */}
+      {saveStatus !== 'idle' && (
+        <div className={`save-status save-status--${saveStatus}`} aria-live="polite">
+          {saveStatus === 'saving' ? '↑ Saving…' : '⚠ Sync error — check connection'}
+        </div>
+      )}
 
       <div className="shell">
         {/* Header */}
