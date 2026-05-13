@@ -301,16 +301,13 @@ button, input, textarea, select {
 }
 
 .app-nav-link {
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--muted);
   text-decoration: none;
-  transition: color 0.15s ease;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
 .app-nav-link:hover {
-  color: var(--text);
+  opacity: 0.72;
 }
 
 .eyebrow {

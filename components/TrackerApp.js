@@ -692,11 +692,10 @@ export default function TrackerApp({ user }) {
             <div className="header-left">
               <div className="header-brand">
                 <div>
-                  <span className="eyebrow">Weekly Workflow</span>
+                  <a className="eyebrow app-nav-link" href="https://intention-space.vercel.app" target="_blank" rel="noopener noreferrer">Intentions</a>
                   <h1 className="header-title">Task Tracker</h1>
                 </div>
               </div>
-              <a className="app-nav-link" href="https://intention-space.vercel.app" target="_blank" rel="noopener noreferrer">Intention Space ↗</a>
               <div className="dashboard-switcher">
                 {DASHBOARD_NAMES.map(name => (
                   <button
