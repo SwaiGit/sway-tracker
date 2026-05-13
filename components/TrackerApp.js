@@ -692,7 +692,7 @@ export default function TrackerApp({ user }) {
             <div className="header-left">
               <div className="header-brand">
                 <div>
-                  <a className="eyebrow app-nav-link" href="https://intention-space.vercel.app" target="_blank" rel="noopener noreferrer">Go to Intentions</a>
+                  <a className="eyebrow app-nav-link" href="https://intention-space.vercel.app">Go to Intentions</a>
                   <h1 className="header-title">Task Tracker</h1>
                 </div>
               </div>
