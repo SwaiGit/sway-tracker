@@ -1431,6 +1431,7 @@ button, input, textarea, select {
   .header-right { display: none; }
 
   .eyebrow { display: none; }
+  .eyebrow.app-nav-link { display: inline-flex; }
 
   .header-title { font-size: 1.3rem; }
 
