@@ -7,3 +7,4 @@ out/
 *.pem
 npm-debug.log*
 .vercel
+supabase/.temp/
